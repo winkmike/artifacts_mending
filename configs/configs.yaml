@@ -1,0 +1,15 @@
+# filepath
+piece1_colmap_path: "./data/piece-1-txt/new-txt/points3D.txt"
+piece2_colmap_path: "./data/piece-2-txt/txt/points3D.txt"
+
+piece1_3d_corners_path: "./output/piece-1-corner-3d.txt"
+piece2_3d_corners_path: "./output/piece-2-corner-3d.txt"
+
+piece1_calibrated_3d_corners_path: "./output/piece-1-calibrated-corner-3d.ply"
+piece2_calibrated_3d_corners_path: "./output/piece-2-calibrated-corner-3d.ply"
+
+piece1_preprocessed_3d_corners_path: "./output/piece-1-preprocessed-corner-3d.ply"
+piece2_preprocessed_3d_corners_path: "./output/piece-2-preprocessed-corner-3d.ply"
+
+
+

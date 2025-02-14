@@ -3,7 +3,7 @@ import numpy as np
 
 # PATH 
 piece1_3d_corners_path = "./output/piece-1-corner-3d.txt"
-piece2_3d_corners_path = "./output/piece-2-corner-3d.txt" 
+piece2_3d_corners_path = "./output/piece-2-corner-3d.txt"
 
 def read_3d_corners_txt(txt_path): 
     f = open(txt_path,'r')
@@ -11,7 +11,10 @@ def read_3d_corners_txt(txt_path):
 
     corners = [] 
     for line in lines: 
-        corner = line.split()
+        point_id = int(line.split()[0])
+        xyz = np.array([float(i) for i in line.split()[1:4]])
+        colors = np.array([float(i) for i in line.split()[4:7]]) / 256
+        corner = np.hstack((xyz, colors))
         corners.append(corner)
 
     return np.array(corners)
@@ -25,8 +28,6 @@ def visualize_3d_corners(corners):
     pcd.colors = o3d.utility.Vector3dVector(colors)
 
     o3d.visualization.draw_geometries([pcd])
-
-    return pcd
 
 def visualize(piece1_3d_corners_path, piece2_3d_corners_path): 
     for path in [piece1_3d_corners_path, piece2_3d_corners_path]: 

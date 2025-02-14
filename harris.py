@@ -1,6 +1,7 @@
 import cv2 
 import numpy as np
 import os 
+from PIL import Image, ImageDraw
 
 # PARAMS 
 gaussian_blur_kernel_size = (5, 5)
@@ -12,7 +13,7 @@ canny_threshold2 = 200
 harris_block_size = 2 
 harris_ksize = 3 
 harris_k = 0.04
-harris_filter_threshold = 0.1
+harris_filter_threshold = 0.01
 
 # PATH
 piece1_path = "./data/piece-1-images/images/"
@@ -62,7 +63,36 @@ def harris_corner_detection(edges):
 
     return corners
 
+def annotate_harris_corners(img_path, corners): 
+    ''' 
+    Annotate the harris corners found on the respective images. 
+    '''
+    # create the harris-imgs folder if hasn't existed 
+    output_folder = f"{output}/harris-imgs"
+    if not os.path.exists(output_folder): 
+        os.makedirs(output_folder)
+
+    # extract the image from img_path 
+    img = Image.open(img_path)
+
+    # iterate through each corner, annotate on the extracted image 
+    harris_pixels = [(round(corner[0]), round(corner[1])) for corner in corners]
+
+    draw = ImageDraw.Draw(img)
+    for harris_pixel in harris_pixels: 
+        draw.point(harris_pixel, fill='blue')
+        
+    # create the output filepath 
+    img_name = os.path.basename(img_path)
+    output_filepath = f"{output_folder}/{img_name}"
+
+    # write the annotated image to the output filepath 
+    img.save(output_filepath)
+
 def find_harris_corners(piece1_path, piece2_path): 
+    ''' 
+    Find harris corners for all pieces' images.
+    '''
     imgs_1 = read_images(piece1_path)
     imgs_2 = read_images(piece2_path)
 
@@ -81,12 +111,16 @@ def find_harris_corners(piece1_path, piece2_path):
                 res += " "
 
             res += "\n"
+            
+            annotate_harris_corners(img_path, corners)
         
         filename = "piece-1-harris" if piece_imgs == imgs_1 else "piece-2-harris"
         with open(f"{output}{filename}.txt", "w") as f: 
             f.write(res)
 
+def main(): 
+    find_harris_corners(piece1_path, piece2_path)
 
 if __name__ == "__main__": 
-    find_harris_corners(piece1_path, piece2_path)
+    main()
 

@@ -6,7 +6,7 @@ piece1_3d_corners_path = "./output/piece-1-corner-3d.txt"
 piece2_3d_corners_path = "./output/piece-2-corner-3d.txt"
 
 def read_3d_corners_txt(txt_path): 
-    f = open(txt_path,'r')
+    f = open(txt_path,'r')  
     lines = f.readlines()
 
     corners = [] 

@@ -43,7 +43,6 @@ class Piece:
         self.corners_pc.remove_outlier_points()
         self.corners_pc.remove_noise()
 
-
     def write_to_file(self, filepath, pcd): 
         ''' 
         Write point cloud to .ply file.

@@ -30,7 +30,6 @@ CUP_CALIBRATION_COLOURS = {
 
 
 f = open("configs/configs.yaml")
-print(f)
 cfg = EasyDict(yaml.safe_load(f))
 
 piece1_colmap_path = cfg.piece1_colmap_path

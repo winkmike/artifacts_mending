@@ -93,9 +93,6 @@ def angle_centroid(angles):
     valid_angles = angles[valid_labels]
     valid_labels = labels[valid_labels]
 
-    # valid_angles = angles
-    # valid_labels = labels
-
     unique_labels = np.unique(valid_labels)
     angle_centroids = np.array([valid_angles[valid_labels == label].mean(axis=0) for label in unique_labels])
 
@@ -237,10 +234,10 @@ def find_correspondences(piece1_corners_path, piece2_corners_path, ref_points_pa
         r = r_init
         piece_record = []
         ref_id = ref1_id if piece_pcd == piece1_pcd else ref2_id 
-        print(f'ref_id = {ref_id}')
         while True: 
             intersections = ball_intersect(ref_id, r, piece_pcd, thickness)
 
+            #TODO: should we do centroid of intersection clusters -> compute angle OR compute angle of each intersection -> compute centroid of angle clusters
             angles = []
             for intersection in intersections: 
                 ref_point, intersection_point = piece_pcd.points[ref_id], piece_pcd.points[intersection]
@@ -251,6 +248,13 @@ def find_correspondences(piece1_corners_path, piece2_corners_path, ref_points_pa
             angle_centroids = angle_centroid(angles)
             for (alpha, beta, gamma) in angle_centroids: 
                 piece_record.append((r, alpha, beta, gamma))
+
+            # intersection_points = [piece_pcd.points[i] for i in intersections]
+            # intersection_centroids = angle_centroid(intersection_points)
+            # ref_point = piece_pcd.points[ref_id]
+            # for centroid in intersection_centroids: 
+            #     alpha, beta, gamma = angle(ref_point, centroid)
+            #     piece_record.append((r, alpha, beta, gamma))
 
             r += inc 
 

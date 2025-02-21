@@ -81,6 +81,7 @@ class CornersPointCloud(PointCloud):
         new_pcd.points = o3d.utility.Vector3dVector(points[distances <= sphere])
         new_pcd.colors = o3d.utility.Vector3dVector(colors)
 
+        o3d.visualization.draw_geometries([new_pcd])
         self.preprocessed_o3d_pc = new_pcd
     
     def remove_noise(self): 

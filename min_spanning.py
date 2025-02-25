@@ -1,9 +1,12 @@
 import open3d as o3d
 import numpy as np
+import pickle
 from tqdm import tqdm
 
 piece1_preprocessed_pcd = "./output/piece-1-preprocessed-corner-3d.ply"
 piece2_preprocessed_pcd = "./output/piece-2-preprocessed-corner-3d.ply"
+
+piece1_output_graph = "./output/"
 
 def get_mst(pcd: o3d.geometry.PointCloud):
     points = np.asarray(pcd.points)
@@ -139,36 +142,89 @@ def split_graph(edges):
 
     return branches
 
+def order_graph(branches):
+    ordered_branches = []
+
+    for branch in branches: 
+        adj_list = {}
+        for edge in branch:
+            i, j, _ = edge
+            if i not in adj_list:
+                adj_list[i] = []
+            if j not in adj_list:
+                adj_list[j] = []
+            adj_list[i].append(j)
+            adj_list[j].append(i)
+        counts = get_node_counts(branch)
+        print(counts)
+        leaf_nodes = [i for i in counts if counts[i] == 2]
+         
+        def dfs(i, visited):
+            visited.add(i)
+            path = []
+            for j in adj_list[i]:
+                if j not in visited:
+                    path = dfs(j, visited)
+            return [i] + path
+        
+        start_node = leaf_nodes[0]
+        ordered_branch = dfs(start_node, set())
+        ordered_branches.append(ordered_branch)
+
+    return ordered_branches
+        
+
 def get_mst_graph(pcd_path): 
     pcd = o3d.io.read_point_cloud(pcd_path)
     mst = get_mst(pcd)
     mst_prune = prune_mst(mst)
-    graph = split_graph(mst_prune)
-    
-    return graph
+    branches = split_graph(mst_prune)
+    ordered_graph = order_graph(branches)
 
-def visualize_graph(piece1_pcd_path, piece2_pcd_path): 
+    return ordered_graph
+
+
+def create_graphs(piece1_pcd_path, piece2_pcd_path):
     pcd1, pcd2 = o3d.io.read_point_cloud(piece1_pcd_path), o3d.io.read_point_cloud(piece2_pcd_path)
     graph1, graph2 = get_mst_graph(piece1_pcd_path), get_mst_graph(piece2_pcd_path)
 
     graphs = [graph1, graph2]
+    xyz_graphs = [] 
 
     for graph in graphs:
         pcd = pcd1 if graph == graph1 else pcd2
-        for edges in graph: 
-            points = []
-            for i, edge in enumerate(edges): 
-                point1_id, point2_id, dist = edge
-                point1, point2 = pcd.points[point1_id], pcd.points[point2_id]
-                points.append(point1)
-                points.append(point2)
+        for ordered_branch in graph: 
+            xyz_graph = []
+            for point_id in ordered_branch: 
+                point = pcd.points[point_id]
+                xyz_graph.append(point)
+
+            # visited = set()
+            # xyz_graph = []
+            # for i, edge in enumerate(branch): 
+            #     point1_id, point2_id, dist = edge
+            #     point1, point2 = pcd.points[point1_id], pcd.points[point2_id]
+            #     if point1_id not in visited: 
+            #         visited.add(point1_id)
+            #         xyz_graph.append(point1)
+            #     if point2_id not in visited: 
+            #         visited.add(point2_id)
+            #         xyz_graph.append(point2)
             
+            xyz_graphs.append(xyz_graph) 
+
             pcd_viz = o3d.geometry.PointCloud()
-            pcd_viz.points = o3d.utility.Vector3dVector(np.array(points))
+            pcd_viz.points = o3d.utility.Vector3dVector(np.array(xyz_graph))
             o3d.visualization.draw_geometries([pcd_viz])
 
+    for i, graph in enumerate(xyz_graphs):
+        with open(f"./output/graph_{i+1}.pkl", "wb") as f: 
+            pickle.dump(graph, f)
+
+    return xyz_graphs
+
 def main(): 
-    visualize_graph(piece1_preprocessed_pcd, piece2_preprocessed_pcd)
+    create_graphs(piece1_preprocessed_pcd, piece2_preprocessed_pcd)
 
 if __name__ == "__main__": 
     main()

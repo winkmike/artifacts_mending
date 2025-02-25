@@ -88,7 +88,7 @@ def get_node_counts(edges):
         counts[j] += 1
     return counts
 
-def prune_mst(mst, min_N=20):
+def prune_mst(mst, min_N=50):
     # prune the mst such that the depth is at least min_N for 2 separate branches
     
     edges = mst.copy()

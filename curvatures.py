@@ -132,24 +132,24 @@ def compute_curvatures(curve, scale, sampling_rate_inc):
 
     indices = np.arange(len(curvatures))  # Indices from 0 to len(curvature_list) - 1
 
-    # fig = go.Figure()
+    fig = go.Figure()
 
-    # fig.add_trace(go.Scatter(
-    #     x=indices,
-    #     y=curvatures,
-    #     mode='markers+lines',
-    #     marker=dict(size=6, color='blue'),
-    #     line=dict(width=2,color='red',dash='dot',shape='spline'),  # Smooth dotted line
-    #     name='Curvature'
-    # ))
+    fig.add_trace(go.Scatter(
+        x=indices,
+        y=curvatures,
+        mode='markers+lines',
+        marker=dict(size=6, color='blue'),
+        line=dict(width=2,color='red',dash='dot',shape='spline'),  # Smooth dotted line
+        name='Curvature'
+    ))
 
-    # fig.update_layout(
-    #     title="Curvature vs. Index",
-    #     xaxis_title="Index",
-    #     yaxis_title="Curvature"
-    # )
+    fig.update_layout(
+        title="Curvature vs. Index",
+        xaxis_title="Index",
+        yaxis_title="Curvature"
+    )
 
-    # fig.show()
+    fig.show()
 
     return curvatures
         

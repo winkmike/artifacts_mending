@@ -1,15 +1,20 @@
 import open3d as o3d
 import numpy as np
-import pickle
+import os
 from tqdm import tqdm
 
 piece1_preprocessed_pcd = "./output/piece-1-preprocessed-corner-3d.ply"
 piece2_preprocessed_pcd = "./output/piece-2-preprocessed-corner-3d.ply"
 
-piece1_output_graph = "./output/"
+output_graph = "./output/graphs"
 
-def get_mst(pcd: o3d.geometry.PointCloud):
-    points = np.asarray(pcd.points)
+def read_ply_file(pcd_file): 
+    pcd = o3d.io.read_point_cloud(pcd_file)
+    points = np.asarray(pcd)
+
+    return points
+
+def get_mst(points):
     n = len(points)
     edges = []
     for i in tqdm(range(n)):
@@ -88,7 +93,7 @@ def get_node_counts(edges):
         counts[j] += 1
     return counts
 
-def prune_mst(mst, min_N=50):
+def prune_mst(mst, min_N=10):
     # prune the mst such that the depth is at least min_N for 2 separate branches
     
     edges = mst.copy()
@@ -171,45 +176,57 @@ def order_graph(branches):
         ordered_branch = dfs(start_node, set())
         ordered_branches.append(ordered_branch)
 
-    return ordered_branches
-        
+    return ordered_branches        
 
-def get_mst_graph(pcd_path): 
-    pcd = o3d.io.read_point_cloud(pcd_path)
-    mst = get_mst(pcd)
+def get_mst_graph_from_path(pcd_path): 
+    points = read_ply_file(pcd_path)
+    mst = get_mst(points)
     mst_prune = prune_mst(mst)
     branches = split_graph(mst_prune)
     ordered_graph = order_graph(branches)
 
     return ordered_graph
 
+def get_mst_graph_from_arr(points): 
+    mst = get_mst(points)
+    mst_prune = prune_mst(mst)
+    branches = split_graph(mst_prune)
+    ordered_graph = order_graph(branches)
 
-def create_graphs(piece1_pcd_path, piece2_pcd_path):
-    pcd1, pcd2 = o3d.io.read_point_cloud(piece1_pcd_path), o3d.io.read_point_cloud(piece2_pcd_path)
-    graph1, graph2 = get_mst_graph(piece1_pcd_path), get_mst_graph(piece2_pcd_path)
+    return ordered_graph
+
+def write_graph_to_json(graphs, output_filepath):
+    folder = os.path.dirname(output_filepath)
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    res = "piece_id, x, y, z" 
+    res += "\n"
+
+    for i, graph in enumerate(graphs):
+        res += f"{i} "
+        for point in graph:
+            x, y, z = point 
+            res += f"{x} {y} {z} "
+        res += "\n"
+
+    with open(output_filepath, "w") as f: 
+        f.write(res)
+
+def create_graphs(piece1_pcd_path, piece2_pcd_path, output_filepath):
+    points1, points2 = read_ply_file(piece1_pcd_path), read_ply_file(piece2_pcd_path)
+    graph1, graph2 = get_mst_graph_from_arr(points1), get_mst_graph_from_arr(points2)
 
     graphs = [graph1, graph2]
     xyz_graphs = [] 
 
     for graph in graphs:
-        pcd = pcd1 if graph == graph1 else pcd2
+        points = points1 if graph == graph1 else points2
         for ordered_branch in graph: 
-            xyz_graph = []
+            xyz_graph = []  
             for point_id in ordered_branch: 
-                point = pcd.points[point_id]
+                point = points[point_id]
                 xyz_graph.append(point)
-
-            # visited = set()
-            # xyz_graph = []
-            # for i, edge in enumerate(branch): 
-            #     point1_id, point2_id, dist = edge
-            #     point1, point2 = pcd.points[point1_id], pcd.points[point2_id]
-            #     if point1_id not in visited: 
-            #         visited.add(point1_id)
-            #         xyz_graph.append(point1)
-            #     if point2_id not in visited: 
-            #         visited.add(point2_id)
-            #         xyz_graph.append(point2)
             
             xyz_graphs.append(xyz_graph) 
 
@@ -217,14 +234,12 @@ def create_graphs(piece1_pcd_path, piece2_pcd_path):
             pcd_viz.points = o3d.utility.Vector3dVector(np.array(xyz_graph))
             o3d.visualization.draw_geometries([pcd_viz])
 
-    for i, graph in enumerate(xyz_graphs):
-        with open(f"./output/graph_{i+1}.pkl", "wb") as f: 
-            pickle.dump(graph, f)
+    write_graph_to_json(xyz_graphs, output_filepath)
 
     return xyz_graphs
 
 def main(): 
-    create_graphs(piece1_preprocessed_pcd, piece2_preprocessed_pcd)
+    create_graphs(piece1_preprocessed_pcd, piece2_preprocessed_pcd, output_filepath=f"{output_graph}/cup.txt")
 
 if __name__ == "__main__": 
     main()
